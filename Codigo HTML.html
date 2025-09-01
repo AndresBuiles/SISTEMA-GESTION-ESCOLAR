@@ -1,0 +1,913 @@
+PANTALLA DE INICIO
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Iniciar sesión — Diseño funcional</title>
+  <style>
+    :root{
+      --bg1:#0f172a; /* dark */
+      --bg2:#0b1220;
+      --card:#ffffff;
+      --accent:#4f46e5;
+      --accent-2:#06b6d4;
+      --danger:#ef4444;
+      --muted:#6b7280;
+      --radius:14px;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(79,70,229,0.12), transparent), linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--card);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .card{
+      width:100%;
+      max-width:420px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius:var(--radius);
+      padding:28px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+      color:#e6eef8;
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    h1{margin:0 0 6px;font-size:20px}
+    p.lead{margin:0 0 18px;color:var(--muted);font-size:13px}
+
+    form{display:flex;flex-direction:column;gap:12px}
+    label{font-size:13px;color:#cfe3ff;display:flex;justify-content:space-between;align-items:center}
+    input[type="text"], input[type="password"], input[type="email"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.02);
+      color:var(--card);
+      outline:none;
+      font-size:14px;
+    }
+    input:focus{box-shadow:0 4px 18px rgba(79,70,229,0.12);border-color:rgba(79,70,229,0.6)}
+    .row{display:flex;gap:10px;align-items:center}
+    .actions{display:flex;gap:10px;margin-top:6px}
+    button{cursor:pointer;border:0;padding:10px 14px;border-radius:10px;font-weight:600}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+    .btn-ghost{background:transparent;color:var(--card);border:1px solid rgba(255,255,255,0.04)}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.12)}
+    .muted{color:var(--muted);font-size:13px}
+    a.forgot{color:#cfe3ff;text-decoration:none;font-size:13px}
+    a.forgot:focus, a.forgot:hover{text-decoration:underline}
+
+    .error{color:#fecaca;font-size:13px;min-height:18px}
+    .status{margin-top:12px;font-size:13px}
+    .status.success{color:#bbf7d0}
+    .status.error{color:#fecaca}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:24px}
+    .modal{background:#071127;padding:20px;border-radius:12px;max-width:420px;width:100%;border:1px solid rgba(255,255,255,0.04)}
+    .modal h3{margin:0 0 6px}
+    .modal p{margin:0 0 12px;color:var(--muted)}
+
+    /* small devices */
+    @media (max-width:420px){.card{padding:18px;border-radius:12px}}
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <header>
+      <h1 id="title">Iniciar sesión</h1>
+      <p class="lead">Ingresa con tu usuario o correo electrónico y contraseña.</p>
+    </header>
+
+    <form id="loginForm" novalidate>
+      <div>
+        <label for="userInput">Usuario o correo electrónico</label>
+        <input id="userInput" name="user" type="text" inputmode="email" autocomplete="username" placeholder="usuario_o_correo" required aria-describedby="userError" />
+        <div class="error" id="userError" aria-live="polite"></div>
+      </div>
+
+      <div>
+        <label for="password">Contraseña
+          <button type="button" id="togglePwd" title="Mostrar / ocultar contraseña" aria-pressed="false" style="font-size:12px;background:transparent;border:0;color:var(--muted)">Mostrar</button>
+        </label>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Tu contraseña" required aria-describedby="pwdError" />
+        <div class="error" id="pwdError" aria-live="polite"></div>
+      </div>
+
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:6px">
+        <div class="muted"><input id="remember" type="checkbox" style="margin-right:8px;vertical-align:middle"> Recordarme</div>
+        <div><a href="#" id="forgotLink" class="forgot">¿Olvidaste tu contraseña?</a></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="loginBtn" type="submit">Ingresar</button>
+        <button class="btn-danger" id="deleteBtn" type="button" title="Borrar campos">Eliminar</button>
+      </div>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <!-- Modal para restablecer contraseña -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <h3>Restablecer contraseña</h3>
+      <p>Ingresa tu correo para recibir un enlace de restablecimiento (simulado).</p>
+      <label for="resetEmail">Correo electrónico</label>
+      <input id="resetEmail" type="email" placeholder="tu@correo.com" />
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button id="cancelReset" class="btn-ghost" type="button">Cancelar</button>
+        <button id="sendReset" class="btn-primary" type="button">Enviar enlace</button>
+      </div>
+      <div id="resetStatus" class="status" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <script>
+    // --------------------
+    // Configuración / datos de ejemplo (sólo para demo local)
+    // --------------------
+    const mockUsers = [
+      { user: 'juan', email: 'juan@example.com', password: 'Password123' },
+      { user: 'maria', email: 'maria@domain.com', password: 'ClaveFuerte7' }
+    ];
+
+    // --------------------
+    // Helpers
+    // --------------------
+    const $ = id => document.getElementById(id);
+    const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+    // UI elementos
+    const form = $('loginForm');
+    const userInput = $('userInput');
+    const passwordInput = $('password');
+    const userError = $('userError');
+    const pwdError = $('pwdError');
+    const status = $('status');
+    const togglePwd = $('togglePwd');
+    const deleteBtn = $('deleteBtn');
+    const forgotLink = $('forgotLink');
+
+    // Modal
+    const modalBackdrop = $('modalBackdrop');
+    const resetEmail = $('resetEmail');
+    const sendReset = $('sendReset');
+    const cancelReset = $('cancelReset');
+    const resetStatus = $('resetStatus');
+
+    // Mostrar / ocultar contraseña
+    togglePwd.addEventListener('click', () => {
+      const showing = passwordInput.type === 'text';
+      passwordInput.type = showing ? 'password' : 'text';
+      togglePwd.textContent = showing ? 'Mostrar' : 'Ocultar';
+      togglePwd.setAttribute('aria-pressed', String(!showing));
+    });
+
+    // Validación del campo usuario/email
+    function validateUserField() {
+      const v = userInput.value.trim();
+      if (!v) { userError.textContent = 'El usuario o correo es obligatorio.'; return false; }
+      if (v.includes('@')) {
+        if (!isEmail(v)) { userError.textContent = 'Introduce un correo electrónico válido.'; return false; }
+      } else {
+        if (v.length < 3) { userError.textContent = 'El usuario debe tener al menos 3 caracteres.'; return false; }
+      }
+      userError.textContent = '';
+      return true;
+    }
+
+    function validatePasswordField() {
+      const p = passwordInput.value;
+      if (!p) { pwdError.textContent = 'La contraseña es obligatoria.'; return false; }
+      if (p.length < 6) { pwdError.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return false; }
+      pwdError.textContent = '';
+      return true;
+    }
+
+    // Validación en tiempo real
+    userInput.addEventListener('input', validateUserField);
+    passwordInput.addEventListener('input', validatePasswordField);
+
+    // Manejo del submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      status.textContent = '';
+      status.className = 'status';
+
+      const okUser = validateUserField();
+      const okPwd = validatePasswordField();
+      if (!okUser || !okPwd) return;
+
+      const identifier = userInput.value.trim();
+      const pwd = passwordInput.value;
+
+      // Buscamos coincidencias en mockUsers por usuario o email
+      const found = mockUsers.find(u => (u.user.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase()) && u.password === pwd);
+
+      if (found) {
+        // Simula inicio exitoso
+        status.textContent = `¡Bienvenido/a, ${found.user}! Inicio de sesión correcto.`;
+        status.classList.add('success');
+        // si se desea aquí se puede redirigir o llamar a una API real
+      } else {
+        status.textContent = 'Usuario/correo o contraseña incorrectos.';
+        status.classList.add('error');
+      }
+    });
+
+    // Botón Eliminar: limpia los campos y estados (no borra cuentas reales)
+    deleteBtn.addEventListener('click', () => {
+      userInput.value = '';
+      passwordInput.value = '';
+      userError.textContent = '';
+      pwdError.textContent = '';
+      status.textContent = 'Campos eliminados.';
+      status.className = 'status';
+    });
+
+    // Olvidaste contraseña -> abrir modal
+    forgotLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetEmail.value = '';
+      resetStatus.textContent = '';
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('aria-hidden', 'false');
+      resetEmail.focus();
+    });
+
+    // Cancelar modal
+    cancelReset.addEventListener('click', () => closeModal());
+
+    // Enviar reset (simulado)
+    sendReset.addEventListener('click', () => {
+      const mail = resetEmail.value.trim();
+      if (!mail) { resetStatus.textContent = 'El correo es obligatorio.'; resetStatus.className = 'status error'; return; }
+      if (!isEmail(mail)) { resetStatus.textContent = 'Introduce un correo válido.'; resetStatus.className = 'status error'; return; }
+
+      // Simular envío
+      resetStatus.textContent = 'Enviando enlace...';
+      resetStatus.className = 'status';
+      setTimeout(() => {
+        resetStatus.textContent = `Se ha enviado un enlace de restablecimiento a ${mail} (simulado).`;
+        resetStatus.className = 'status success';
+      }, 700);
+    });
+
+    // Cerrar modal cuando se hace clic fuera
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalBackdrop.style.display === 'flex') closeModal();
+    });
+
+    function closeModal(){
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden', 'true');
+      resetStatus.textContent = '';
+      // devolver el foco al enlace "Olvidaste" para accesibilidad
+      forgotLink.focus();
+    }
+
+    // Mejora: manejar ENTER en el modal para enviar
+    resetEmail.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendReset.click(); }
+    });
+
+  </script>
+</body>
+</html>
+
+REGISTRO USUARIO
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registro de Usuario</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --danger:#ef4444;
+      --muted:#6b7280;
+      --radius:14px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#eef4ff);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:20px;
+    }
+    .card{
+      background:var(--card);
+      padding:28px;
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(16,24,40,0.08);
+      width:100%;
+      max-width:480px;
+    }
+    h1{margin-top:0;font-size:22px}
+    p.lead{color:var(--muted);margin-bottom:20px}
+    form{display:grid;gap:14px}
+    label{font-size:14px;color:var(--muted)}
+    .input{border:1px solid #e6eefc;padding:10px;border-radius:10px;display:block;width:100%}
+    .btn{
+      border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px;
+    }
+    .btn-primary{background:var(--primary);color:white}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.12)}
+    .row{display:flex;gap:10px}
+    .link{font-size:14px;color:var(--primary);text-decoration:none}
+    .msg{padding:10px;border-radius:8px;font-size:14px}
+    .msg.error{background:#fff5f5;color:var(--danger);border:1px solid rgba(239,68,68,0.06)}
+    .msg.success{background:#f0fdf4;color:#166534;border:1px solid rgba(34,197,94,0.06)}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Registro de Usuario</h1>
+    <p class="lead">Completa los campos para crear tu cuenta institucional.</p>
+
+    <div id="messageArea" role="status" aria-live="polite"></div>
+
+    <form id="registerForm" novalidate>
+      <div>
+        <label for="nombres">Nombres</label>
+        <input id="nombres" name="nombres" type="text" class="input" required />
+      </div>
+      <div>
+        <label for="apellidos">Apellidos</label>
+        <input id="apellidos" name="apellidos" type="text" class="input" required />
+      </div>
+      <div>
+        <label for="cedula">Cédula</label>
+        <input id="cedula" name="cedula" type="text" class="input" required />
+      </div>
+      <div>
+        <label for="correo">Correo institucional</label>
+        <input id="correo" name="correo" type="email" class="input" placeholder="ejemplo@institucion.edu" required />
+      </div>
+      <div>
+        <label for="rol">Rol</label>
+        <select id="rol" name="rol" class="input" required>
+          <option value="">Seleccione...</option>
+          <option value="estudiante">Estudiante</option>
+          <option value="docente">Docente</option>
+          <option value="administrativo">Administrativo</option>
+        </select>
+      </div>
+      <div>
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" class="input" required />
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Registrar</button>
+        <button type="button" id="clearBtn" class="btn btn-danger">Borrar</button>
+      </div>
+    </form>
+    <p style="margin-top:12px;font-size:14px;color:var(--muted)">¿Ya tienes cuenta? <a href="#" class="link">Iniciar sesión</a></p>
+  </main>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const messageArea = document.getElementById('messageArea');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function showMessage(text, type='error'){
+      messageArea.innerHTML = `<div class="msg ${type}">${text}</div>`;
+      clearTimeout(showMessage._t);
+      showMessage._t = setTimeout(()=> messageArea.innerHTML='', 5000);
+    }
+
+    function validateEmail(email){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      if(!data.nombres.trim() || !data.apellidos.trim() || !data.cedula.trim() || !data.correo.trim() || !data.rol || !data.password.trim()){
+        showMessage('Por favor, completa todos los campos.');
+        return;
+      }
+      if(!validateEmail(data.correo)){
+        showMessage('Correo institucional no válido.');
+        return;
+      }
+      if(data.password.length < 6){
+        showMessage('La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+
+      // Simular registro
+      showMessage('Registro exitoso. Bienvenido/a.', 'success');
+      form.reset();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if(confirm('¿Deseas borrar los datos ingresados?')){
+        form.reset();
+        showMessage('Formulario borrado.', 'success');
+      }
+    });
+  </script>
+</body>
+</html>
+
+GESTIÓN DE ESTUDIANTES
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestión de Estudiantes</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --danger:#ef4444;
+      --muted:#6b7280;
+      --radius:14px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#eef4ff);
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+    }
+    .container{
+      width:100%;
+      max-width:800px;
+    }
+    .card{
+      background:var(--card);
+      padding:20px;
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(16,24,40,0.08);
+      margin-bottom:20px;
+    }
+    h1{margin-top:0;font-size:22px}
+    label{font-size:14px;color:var(--muted)}
+    .input, select{
+      border:1px solid #e6eefc;
+      padding:8px;
+      border-radius:10px;
+      width:100%;
+      margin-top:4px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > div{flex:1 1 200px}
+    .btn{
+      border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px;
+    }
+    .btn-primary{background:var(--primary);color:white}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.12)}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+    th, td{
+      border:1px solid #e6eefc;
+      padding:8px;
+      text-align:left;
+      font-size:14px;
+    }
+    th{background:#f9fafb}
+    .msg{padding:10px;border-radius:8px;font-size:14px;margin-bottom:10px}
+    .msg.error{background:#fff5f5;color:var(--danger);border:1px solid rgba(239,68,68,0.06)}
+    .msg.success{background:#f0fdf4;color:#166534;border:1px solid rgba(34,197,94,0.06)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Gestión de Estudiantes</h1>
+      <div id="messageArea"></div>
+      <form id="studentForm" novalidate>
+        <div class="row">
+          <div>
+            <label for="nombres">Nombres</label>
+            <input id="nombres" name="nombres" type="text" class="input" required />
+          </div>
+          <div>
+            <label for="apellidos">Apellidos</label>
+            <input id="apellidos" name="apellidos" type="text" class="input" required />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="grado">Grado</label>
+            <input id="grado" name="grado" type="text" class="input" required />
+          </div>
+          <div>
+            <label for="seccion">Sección</label>
+            <input id="seccion" name="seccion" type="text" class="input" required />
+          </div>
+        </div>
+        <div>
+          <label for="estado">Estado matrícula</label>
+          <select id="estado" name="estado" class="input" required>
+            <option value="">Seleccione...</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button type="submit" class="btn btn-primary">Guardar estudiante</button>
+          <button type="button" id="clearBtn" class="btn btn-danger">Borrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Lista de Estudiantes</h2>
+      <table id="studentsTable">
+        <thead>
+          <tr>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Grado</th>
+            <th>Sección</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filas generadas dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('studentForm');
+    const messageArea = document.getElementById('messageArea');
+    const clearBtn = document.getElementById('clearBtn');
+    const studentsTable = document.getElementById('studentsTable').querySelector('tbody');
+
+    function showMessage(text, type='error'){
+      messageArea.innerHTML = `<div class="msg ${type}">${text}</div>`;
+      clearTimeout(showMessage._t);
+      showMessage._t = setTimeout(()=> messageArea.innerHTML='', 5000);
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      if(!data.nombres.trim() || !data.apellidos.trim() || !data.grado.trim() || !data.seccion.trim() || !data.estado){
+        showMessage('Por favor, completa todos los campos.');
+        return;
+      }
+
+      // Agregar estudiante a la tabla
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${data.nombres}</td><td>${data.apellidos}</td><td>${data.grado}</td><td>${data.seccion}</td><td>${data.estado}</td>`;
+      studentsTable.appendChild(row);
+
+      showMessage('Estudiante guardado con éxito.', 'success');
+      form.reset();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if(confirm('¿Deseas borrar los datos del formulario?')){
+        form.reset();
+        showMessage('Formulario borrado.', 'success');
+      }
+    });
+  </script>
+</body>
+</html>
+
+GESTIÓN ACADÉMICA
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestión Académica</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --danger:#ef4444;
+      --muted:#6b7280;
+      --radius:14px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#eef4ff);
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+    }
+    .container{
+      width:100%;
+      max-width:800px;
+    }
+    .card{
+      background:var(--card);
+      padding:20px;
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(16,24,40,0.08);
+      margin-bottom:20px;
+    }
+    h1{margin-top:0;font-size:22px}
+    label{font-size:14px;color:var(--muted)}
+    .input, select{
+      border:1px solid #e6eefc;
+      padding:8px;
+      border-radius:10px;
+      width:100%;
+      margin-top:4px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > div{flex:1 1 200px}
+    .btn{
+      border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px;
+    }
+    .btn-primary{background:var(--primary);color:white}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.12)}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+    th, td{
+      border:1px solid #e6eefc;
+      padding:8px;
+      text-align:left;
+      font-size:14px;
+    }
+    th{background:#f9fafb}
+    .msg{padding:10px;border-radius:8px;font-size:14px;margin-bottom:10px}
+    .msg.error{background:#fff5f5;color:var(--danger);border:1px solid rgba(239,68,68,0.06)}
+    .msg.success{background:#f0fdf4;color:#166534;border:1px solid rgba(34,197,94,0.06)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Gestión Académica</h1>
+      <div id="messageArea"></div>
+      <form id="courseForm" novalidate>
+        <div>
+          <label for="curso">Nombre del curso</label>
+          <input id="curso" name="curso" type="text" class="input" required />
+        </div>
+        <div>
+          <label for="docente">Docente asignado</label>
+          <input id="docente" name="docente" type="text" class="input" required />
+        </div>
+        <div>
+          <label for="horario">Horario</label>
+          <input id="horario" name="horario" type="text" class="input" placeholder="Ej: Lunes y Miércoles 8:00-10:00" required />
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button type="submit" class="btn btn-primary">Agregar curso</button>
+          <button type="button" id="clearBtn" class="btn btn-danger">Borrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Lista de Cursos</h2>
+      <table id="coursesTable">
+        <thead>
+          <tr>
+            <th>Curso</th>
+            <th>Docente</th>
+            <th>Horario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filas generadas dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('courseForm');
+    const messageArea = document.getElementById('messageArea');
+    const clearBtn = document.getElementById('clearBtn');
+    const coursesTable = document.getElementById('coursesTable').querySelector('tbody');
+
+    function showMessage(text, type='error'){
+      messageArea.innerHTML = `<div class="msg ${type}">${text}</div>`;
+      clearTimeout(showMessage._t);
+      showMessage._t = setTimeout(()=> messageArea.innerHTML='', 5000);
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      if(!data.curso.trim() || !data.docente.trim() || !data.horario.trim()){
+        showMessage('Por favor, completa todos los campos.');
+        return;
+      }
+
+      // Agregar curso a la tabla
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${data.curso}</td><td>${data.docente}</td><td>${data.horario}</td>`;
+      coursesTable.appendChild(row);
+
+      showMessage('Curso agregado con éxito.', 'success');
+      form.reset();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if(confirm('¿Deseas borrar los datos del formulario?')){
+        form.reset();
+        showMessage('Formulario borrado.', 'success');
+      }
+    });
+  </script>
+</body>
+</html>
+
+PANTALLA PRINCIPAL
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pantalla Principal</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 0;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    .row > div {
+      flex: 1 1 200px;
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      color: white;
+    }
+    .btn-danger {
+      background-color: #ef4444;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f9fafb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Pantalla Principal</h1>
+      <form id="mainForm">
+        <div>
+          <label for="estudiantes">Estudiantes</label>
+          <input type="text" id="estudiantes" name="estudiantes" placeholder="Cantidad o nombre" />
+        </div>
+        <div>
+          <label for="docentes">Docentes</label>
+          <input type="text" id="docentes" name="docentes" placeholder="Cantidad o nombre" />
+        </div>
+        <div>
+          <label for="cursos">Cursos</label>
+          <input type="text" id="cursos" name="cursos" placeholder="Cantidad o nombre" />
+        </div>
+        <div>
+          <label for="horarios">Horarios</label>
+          <input type="text" id="horarios" name="horarios" placeholder="Ej: Lunes 8:00-10:00" />
+        </div>
+        <div>
+          <label for="informes">Informes</label>
+          <input type="text" id="informes" name="informes" placeholder="Ej: Informe trimestral" />
+        </div>
+        <div class="row">
+          <button type="submit" class="btn-primary">Ir a Módulos</button>
+          <button type="button" id="clearBtn" class="btn-danger">Borrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Datos Ingresados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Estudiantes</th>
+            <th>Docentes</th>
+            <th>Cursos</th>
+            <th>Horarios</th>
+            <th>Informes</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('mainForm');
+    const clearBtn = document.getElementById('clearBtn');
+    const dataBody = document.getElementById('dataBody');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${data.estudiantes}</td><td>${data.docentes}</td><td>${data.cursos}</td><td>${data.horarios}</td><td>${data.informes}</td>`;
+      dataBody.appendChild(row);
+
+      form.reset();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('¿Deseas borrar los datos del formulario?')) {
+        form.reset();
+      }
+    });
+  </script>
+</body>
+</html>
